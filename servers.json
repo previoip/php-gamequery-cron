@@ -1,7 +1,14 @@
 {
   "server 01" : {
-    "queryProtocol" : "",
-    "queryHost" : "",
-    "queryName" : ""
+    "serverPort" : "27015",
+    "queryHost" : "localhost",
+    "queryPort" : "27015",
+    "queryProtocol" : ""
+  },
+  "server 02" : {
+    "serverPort" : "27017",
+    "queryHost" : "localhost",
+    "queryPort" : "27018",
+    "queryProtocol" : ""
   }
 }
