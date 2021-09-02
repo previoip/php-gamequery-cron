@@ -6,16 +6,30 @@
  *
  * @return String Returns a concatenate string for sql statement.
  */
-function encloseStatementValue($target)
+function encloseStatementValue($target, $asString = false)
 {
   if(gettype($target) == 'string')
   {
-    return  '`' . $target . '`'; 
+    if($asString)
+    {
+      return  '\'' . $target . '\''; 
+    }
+    else
+    {
+      return  '`' . $target . '`';
+    }
   }
   
   else if (gettype($target) == 'array')
   {
-    $temp = array_map(function($item){return '`' . $item . '`';}, $target);
+    if($asString)
+    {
+      $temp = array_map(function($item){return '\'' . $item . '\'';}, $target);
+    }
+    else
+    {
+      $temp = array_map(function($item){return '`' . $item . '`';}, $target);
+    }
     return  '(' . implode(', ', $temp) . ')';   
   }
   

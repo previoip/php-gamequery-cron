@@ -9,10 +9,11 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'my_gamequery_db');
 // define db.table defaults, do not change
-define('DB_TABLE_GAMESERVERS', 'game_server');
-define('DB_TABLE_GAMEINFO', 'game_info');
+define('DB_TABLE_GAMESERVERS', 'game_servers');
+define('DB_TABLE_STATS', 'serverstats');
 
 // get servers information
+$servers_JSON = file_get_contents( __DIR__ . '/servers-info-temp.json');
 $servers_JSON = json_decode($servers_JSON, TRUE);
 
 // gamequery class instance
@@ -64,7 +65,8 @@ if(!$database){
       ON DELETE CASCADE
   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
   SQLSTMT;
-  $queryStatement_tableInit = sprintf($queryStatement_tableInit, DB_TABLE_GAMEINFO, DB_TABLE_GAMESERVERS, DB_TABLE_GAMEINFO);
+
+  $queryStatement_tableInit = sprintf($queryStatement_tableInit, DB_TABLE_GAMESERVERS, DB_TABLE_STATS, DB_TABLE_GAMESERVERS);
   
   try
   {
@@ -81,29 +83,49 @@ if(!$database){
 
   if(!$db->commit() && $db->connect_error){
     printf("Could not initialize database: %s\n", $db->connect_error);
+    exit();
   }
 
 } else {
   
-  $queryStatement_exist = 'SELECT EXIST( SELECT 1 FROM `' . DB_TABLE_GAMESERVERS . '` WHERE %s = %s) LIMIT 1';
-  $queryStatement_insert = 'INSERT INTO `' . DB_TABLE_GAMEINFO . '` %s VALUES %s';
-  
+  $queryStatement_exist = 'SELECT EXISTS( SELECT 1 FROM `%s` WHERE %s = %s) LIMIT 1';
+  $queryStatement_insert = 'INSERT INTO %s %s VALUES %s' ;
+  $queryStatement_update = 'UPDATE %s SET %s WHERE %s';
+  $queryStatement_select = 'SELECT * FROM %s';
+  $queryStatement_insert_dupe = $queryStatement_insert . ' ON DUPLICATE KEY UPDATE %s';
+
   $columns = ['GAMESERVER_NAME', 'GAMESERVER_HOST', 'GAMESERVER_PORT', 'GAMESERVER_QUERYPORT', 'GAMESERVER_ENABLE', 'GAMESERVER_QUERYPROTOCOL'];
-  
-  $queryColumns = encloseStatementValue($columns[0]);
-  $queryValues = encloseStatementValue('myserver');
-  $queryStatement = sprintf($queryStatement_exist, $queryColumns, $queryValues);
+  $queryColumns = encloseStatementValue($columns);
 
-  $result = $db->query($queryStatement);
-  var_dump($result->fetch_all());
+  $data = $db->query(sprintf($queryStatement_select, DB_TABLE_GAMESERVERS));
+  $db->commit();
+  $servers_db = $data->fetch_all(MYSQLI_ASSOC);
 
+  $servers_exist = array();
+  $index = 0;
+
+  $columns = ['GAMESERVER_NAME', 'GAMESERVER_HOST', 'GAMESERVER_PORT', 'GAMESERVER_QUERYPORT', 'GAMESERVER_ENABLE', 'GAMESERVER_QUERYPROTOCOL'];
   foreach($servers_JSON as $serverName=>$server){
+    // $values = array($serverName, $server['queryHost'], $server['serverPort'], $server['queryPort'], 1, $server['queryProtocol']);
     $values = array($serverName, $server['queryHost'], $server['serverPort'], $server['queryPort'], 1, $server['queryProtocol']);
-    $queryColumns = encloseStatementValue($columns);
-    $queryValues = encloseStatementValue($values);
-    $queryStatement = sprintf($queryStatement_insert, $queryColumns, $queryValues);
-  
-    // $db->prepare($queryStatement);
+
+    $concat = array_combine($columns, $values);
+    array_walk($concat, function(&$v, $k){$v = $k . ' = \''. $v .'\'';});
+    $concat = implode(', ', $concat);
+    $queryStatement = sprintf($queryStatement_update, DB_TABLE_GAMESERVERS, $concat, 'GAMESERVER_ID = ' . ($index + 1) . '' ); 
+    
+    if(isset($servers_db[$index]['GAMESERVER_ID']))
+    {
+      if($index + 1 . '' == $servers_db[$index]['GAMESERVER_ID'])
+      {
+        $db->query($queryStatement);
+      } 
+    } else {
+      $db->query(sprintf($queryStatement_insert, DB_TABLE_GAMESERVERS, '(`GAMESERVER_NAME`)', '(\''. $serverName .'\')'));
+      $db->query($queryStatement);
+    }
+    $db->commit();
+    $index++;
   }
 
   // todo: insert query result if values differ
@@ -112,7 +134,7 @@ if(!$database){
 
   $queryColumns = encloseStatementValue($columns);
   $queryValues = encloseStatementValue($values);
-  $queryStatement = sprintf($queryStatement_insert, $queryColumns, $queryValues);
+  $queryStatement = sprintf($queryStatement_insert, DB_TABLE_STATS, $queryColumns, $queryValues);
 }
 
 $db->close();
