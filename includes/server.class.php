@@ -22,7 +22,7 @@ class GameServer
     $this->serverQuery = new SQ\SourceQuery;
   }
 
-  private function addServer( $serverName, $serverHost, $serverPort, $serverEngine = SQ_ENGINE, $timeout = SQ_TIMEOUT )
+  public function addServer( $serverName, $serverHost, $serverPort, $serverEngine = SQ_ENGINE, $timeout = SQ_TIMEOUT )
   {
     $this->serverName = $serverName;
     $this->serverHost = $serverHost;
@@ -31,7 +31,7 @@ class GameServer
     $this->timeout = $timeout;
   }
 
-  private function query( $returnArray = False )
+  public function query( $returnArray = False )
   {
     try
     {
@@ -39,7 +39,7 @@ class GameServer
       $this->queryResult = array( null, $this->serverQuery->GetInfo(), $this->serverQuery->GetRules(), $this->serverQuery->GetPlayers() );
     }
 
-    catch (Exeption $e)
+    catch (Exception $e)
     {
       $this->queryResult = array( $e , null, null, null);
     }
@@ -54,12 +54,12 @@ class GameServer
     }
   }
 
-  private function getPlayers()
+  public function getPlayers()
   {
     return $this->queryResult[3];
   }
 
-  private function getInfo()
+  public function getInfo()
   {
     return $this->queryResult[1];
   }

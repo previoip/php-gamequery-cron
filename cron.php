@@ -7,7 +7,7 @@ include __DIR__ . '/includes/functions.php';
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
-define('DB_NAME', 'my_gamequery_db');
+define('DB_NAME', 'test_gamequery_db');
 // define db.table defaults, do not change
 define('DB_TABLE_GAMESERVERS', 'game_servers');
 define('DB_TABLE_STATS', 'serverstats');
@@ -35,6 +35,9 @@ $database = $db->select_db(DB_NAME);
 
 if(!$database){
   // try create the database, if already created then continue, if cant then rollback and die
+
+  echo "Creating Database...";
+
   $queryStatement_databaseInit = "CREATE DATABASE IF NOT EXISTS `%s`";
   $queryStatement_databaseInit = sprintf($queryStatement_databaseInit, DB_NAME);
   
@@ -55,9 +58,9 @@ if(!$database){
     `SERVER_GAMESERVER` int(11) unsigned NOT NULL,
     `SERVER_TIMESTAMP` datetime NOT NULL,
     `SERVER_STATUS` tinyint NOT NULL default 0,
-    `SERVER_INFO` varchar(255) NOT NULL default '',
+    `SERVER_INFO` json NOT NULL default '',
     `SERVER_PLAYER_NUM` tinyint NOT NULL default 0,
-    `SERVER_PLAYER_INFO` varchar(255) NOT NULL default '',
+    `SERVER_PLAYER_INFO` json NOT NULL default '',
     PRIMARY KEY (`SERVER_ID`),
     INDEX (`SERVER_ID`, `SERVER_TIMESTAMP`),
     FOREIGN KEY `SERVER_GAMESERVER`(`SERVER_ID`)
@@ -78,12 +81,15 @@ if(!$database){
   catch ( Exception $e )
   {
     $db->rollback();
-    echo $e;
+    printf("Database initialization has failed.\n %s", $e);
   }
 
   if(!$db->commit() && $db->connect_error){
     printf("Could not initialize database: %s\n", $db->connect_error);
     exit();
+  } else {
+  echo "Database Created.\n";
+  echo $date;
   }
 
 } else {
@@ -100,33 +106,29 @@ if(!$database){
   $data = $db->query(sprintf($queryStatement_select, DB_TABLE_GAMESERVERS));
   $db->commit();
   $servers_db = $data->fetch_all(MYSQLI_ASSOC);
-
-  $servers_exist = array();
-  $index = 0;
-
+  
+  
   $columns = ['GAMESERVER_NAME', 'GAMESERVER_HOST', 'GAMESERVER_PORT', 'GAMESERVER_QUERYPORT', 'GAMESERVER_ENABLE', 'GAMESERVER_QUERYPROTOCOL'];
+  
+  $index = 0;
   foreach($servers_JSON as $serverName=>$server){
     // $values = array($serverName, $server['queryHost'], $server['serverPort'], $server['queryPort'], 1, $server['queryProtocol']);
-    $values = array($serverName, $server['queryHost'], $server['serverPort'], $server['queryPort'], 1, $server['queryProtocol']);
-
+    $values = array($serverName, $server['queryHost'], $server['serverPort'], $server['queryPort'], $server['enableQuery'], $server['queryProtocol']);
     $concat = array_combine($columns, $values);
     array_walk($concat, function(&$v, $k){$v = $k . ' = \''. $v .'\'';});
     $concat = implode(', ', $concat);
-    $queryStatement = sprintf($queryStatement_update, DB_TABLE_GAMESERVERS, $concat, 'GAMESERVER_ID = ' . ($index + 1) . '' ); 
     
-    if(isset($servers_db[$index]['GAMESERVER_ID']))
+    if(!isset($servers_db[$index]['GAMESERVER_ID']))
     {
-      if($index + 1 . '' == $servers_db[$index]['GAMESERVER_ID'])
-      {
-        $db->query($queryStatement);
-      } 
-    } else {
       $db->query(sprintf($queryStatement_insert, DB_TABLE_GAMESERVERS, '(`GAMESERVER_NAME`)', '(\''. $serverName .'\')'));
-      $db->query($queryStatement);
     }
-    $db->commit();
+    $queryStatement = sprintf($queryStatement_update, DB_TABLE_GAMESERVERS, $concat, 'GAMESERVER_ID = ' . ($index + 1) . '' ); 
+    $db->query($queryStatement);
+
     $index++;
   }
+    $db->commit();
+
 
   // todo: insert query result if values differ
   $columns = ['SERVER_ID', 'SERVER_GAMESERVER', 'SERVER_TIMESTAMP', 'SERVER_STATUS', 'SERVER_INFO', 'SERVER_PLAYER_NUM', 'SERVER_PLAYER_INFO'];
