@@ -1,0 +1,16 @@
+{
+  "sveco" : {
+    "serverPort" : "27015",
+    "queryHost" : "localhost",
+    "queryPort" : "27015",
+    "queryProtocol" : "source",
+    "enableQuery" : 1
+  },
+  "l4d2" : {
+    "serverPort" : "27099",
+    "queryHost" : "localhost",
+    "queryPort" : "27099",
+    "queryProtocol" : "source",
+    "enableQuery" : 1
+  }
+}

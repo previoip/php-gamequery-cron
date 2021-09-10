@@ -3,7 +3,13 @@
 personal-dump repo; php cron job script for collecting dedicated servers information for analytical and server monitoring. 
 PHP 7.4.20
 
-## Setup
+## Pre-Setup
+
+1. Edit `config.php` and `servers.json`
+2. Run `create_db.php` to initiate database
+3. setup a cronjob with `php cron.php`. see on how to setup a cron-job below.
+
+## Setting up Cron-Job
 #### Windows
 
 [stackoverflow guide](https://stackoverflow.com/questions/7195503/setting-up-a-cron-job-in-windowslink)
@@ -13,6 +19,7 @@ PHP 7.4.20
 3. Action->Create Basic Task->Type a name and Click Next
 4. Follow through the wizard.
 
+ 
 #### todo: Linux
 todo: readme
 

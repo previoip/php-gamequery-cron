@@ -38,3 +38,8 @@ function encloseStatementValue($target, $asString = false)
     return;
   }
 }
+
+function tosstr($mixed)
+{
+  return "'" . $mixed . "'";
+}

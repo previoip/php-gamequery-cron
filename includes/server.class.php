@@ -31,7 +31,7 @@ class GameServer
     $this->timeout = $timeout;
   }
 
-  public function query( $returnArray = False )
+  public function begin( $returnArray = False )
   {
     try
     {
@@ -54,13 +54,23 @@ class GameServer
     }
   }
 
-  public function getPlayers()
+  public function getPlayers($json = false)
   {
-    return $this->queryResult[3];
+    if(empty($this->queryResult[3])){ return '{}'; }
+    $players = $this->queryResult[3];
+    if($json){
+      return json_encode($this->queryResult[3]);
+    } else {
+      return $this->queryResult[3];
+    }
   }
 
-  public function getInfo()
+  public function getInfo($json = false)
   {
-    return $this->queryResult[1];
+    if($json){
+      return json_encode($this->queryResult[1]);
+    } else {
+      return $this->queryResult[1];
+    }
   }
 }
