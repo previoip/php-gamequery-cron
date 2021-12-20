@@ -1,3 +1,5 @@
+## note: abandoned 
+
 # GameQuery CronJob
 
 personal-dump repo; php cron job script for collecting dedicated servers information for analytical and server monitoring. 
@@ -22,5 +24,3 @@ PHP 7.4.20
  
 #### todo: Linux
 todo: readme
-
-note: tested on source dedicated servers only, my goal was for an self own personal factorio dedicated server, although i havent find any query protocol lib for php.
